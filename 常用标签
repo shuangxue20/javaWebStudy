@@ -1,0 +1,16 @@
+表格标签{
+    <table>:定义表格          border:表示边框的高度    cellspacing:表示单元格之间的空间
+    <tr>:定义表格中的一行,可包含多个th和td
+    <th>:表头单元格，具有加粗居中的效果
+    <td>:表示普通单元格
+}
+表单标签{
+    <form>:定义表单    action:表单提交的url，表示往哪里提交，如果为null默认提交到当前页面
+    method:表单提交方式(不写默认是get)    get:在url后拼接表单数据，url长度有限制   post:在请求体中传递，大小无限制
+    input里的type属性，包含了各种表单项    select:定义下拉列表   textarea:定义文本域
+    <form action="" method="get">
+        用户名: <input type="text" name="username">
+        年龄: <input type="text" name="age">
+        <input type="submit" name="提交">
+    </form>
+}
