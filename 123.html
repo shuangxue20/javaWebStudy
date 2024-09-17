@@ -1,0 +1,58 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片画廊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 定义明亮模式和黑暗模式的样式 */
+        .light-mode {
+            filter: brightness(1); /* 明亮模式，正常亮度 */
+        }
+        .dark-mode {
+            filter: brightness(0.5); /* 黑暗模式，降低亮度 */
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="flex flex-col items-center">
+        <!-- 大图片 -->
+        <img id="mainImage" src="https://via.placeholder.com/600x400" alt="大图片" class="mb-4">
+
+        <div class="flex space-x-4 mb-4">
+            <!-- 小图片列表，点击后会更换大图片 -->
+            <img src="https://via.placeholder.com/100x100" alt="小图片1" class="small-image cursor-pointer" data-src="https://via.placeholder.com/600x400">
+            <img src="https://via.placeholder.com/100x100/ff0000" alt="小图片2" class="small-image cursor-pointer" data-src="https://via.placeholder.com/600x400/ff0000">
+            <img src="https://via.placeholder.com/100x100/00ff00" alt="小图片3" class="small-image cursor-pointer" data-src="https://via.placeholder.com/600x400/00ff00">
+            <img src="https://via.placeholder.com/100x100/0000ff" alt="小图片4" class="small-image cursor-pointer" data-src="https://via.placeholder.com/600x400/0000ff">
+            <img src="https://via.placeholder.com/100x100/ffff00" alt="小图片5" class="small-image cursor-pointer" data-src="https://via.placeholder.com/600x400/ffff00">
+        </div>
+
+        <!-- 切换模式按钮 -->
+        <button id="toggleMode" class="bg-blue-500 text-white px-4 py-2 rounded">切换模式</button>
+    </div>
+    
+    <script>
+        // 获取按钮和图片元素
+        const toggleModeButton = document.getElementById('toggleMode');
+        const mainImage = document.getElementById('mainImage');
+        const smallImages = document.querySelectorAll('.small-image');
+        let isDarkMode = false; // 初始化为明亮模式
+
+        // 添加点击事件，切换大图片的模式
+        toggleModeButton.addEventListener('click', () => {
+            isDarkMode = !isDarkMode; // 切换模式状态
+            mainImage.className = isDarkMode ? 'dark-mode' : 'light-mode'; // 根据状态设置类名
+        });
+
+        // 为每个小图片添加点击事件，点击后更换大图片
+        smallImages.forEach(image => {
+            image.addEventListener('click', () => {
+                mainImage.src = image.getAttribute('data-src'); // 更换大图片的src
+            });
+        });
+    </script>
+</body>
+</html>
