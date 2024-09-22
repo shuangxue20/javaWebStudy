@@ -1,0 +1,122 @@
+<!DOCTYPE html>  
+<html lang="zh">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>弹球Demo</title>  
+    <style>  
+        /* 设置页面和canvas的样式 */  
+         body {  
+            margin: 0;  
+            overflow: hidden; /* 隐藏滚动条 */  
+        } 
+         
+        canvas {  
+            background: #020000; /* canvas背景颜色 */  
+            display: block; /* 避免canvas旁边的空白 */  
+        }  
+    </style>  
+</head>  
+<body>  
+    <canvas id="canvas"></canvas>  
+    <script>  
+        // 获取canvas元素并设置其宽高  
+        const canvas = document.getElementById('canvas');  
+        const ctx = canvas.getContext('2d');//获得画布 
+
+        canvas.width = window.innerWidth; // 设置canvas宽度为窗口宽度  
+        canvas.height = window.innerHeight; // 设置canvas高度为窗口高度  
+
+
+
+        const balls = []; // 存储小球的数组  
+        const numBalls = 10; // 定义小球数量  
+
+        // 随机颜色生成函数  
+        function randomColor() {  
+            return `hsl(${Math.random() * 360}, 100%, 50%)`; // 返回随机色相的颜色字符串  
+        }  
+
+        // 球的构造函数  
+        function Ball(x, y, radius) {  
+            this.x = x; // 小球的x坐标  
+            this.y = y; // 小球的y坐标  
+            this.radius = radius; // 小球的半径  
+            this.dx = (Math.random() - 0.5) * 4; // 小球的横向速度（随机）  
+            this.dy = (Math.random() - 0.5) * 4; // 小球的纵向速度（随机）  
+            this.color = randomColor(); // 小球的颜色  
+        }  
+
+        // 绘制小球的方法  
+        Ball.prototype.draw = function() {  
+            ctx.beginPath(); // 新建声明画画任务  
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); // 画圆  
+            ctx.fillStyle = this.color; // 设定填充颜色  
+            ctx.fill(); // 填充颜色  
+            ctx.closePath(); // 关闭任务 
+        };  
+
+
+
+
+        // 更新小球的位置的方法  
+        Ball.prototype.update = function() {  
+            this.x += this.dx; // 更新x坐标  
+            this.y += this.dy; // 更新y坐标  
+
+            // 检测与墙壁的碰撞  
+            if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {  
+                this.dx = -this.dx; // 反向横向速度  
+                this.color = randomColor(); // 改变颜色  
+            }  
+            if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {  
+                this.dy = -this.dy; // 反向纵向速度  
+                this.color = randomColor(); // 改变颜色  
+            }  
+        };  
+
+        // 检测两个球之间的碰撞  
+        function detectCollision(ball1, ball2) {  
+            const dx = ball1.x - ball2.x; // x轴的距离  
+            const dy = ball1.y - ball2.y; // y轴的距离  
+            const distance = Math.sqrt(dx * dx + dy * dy); // 计算两球之间的距离  
+            return distance < ball1.radius + ball2.radius; // 判断是否发生碰撞  
+        }  
+
+
+        
+
+        // 创建小球并添加到数组  
+        for (let i = 0; i < numBalls; i++) {  
+            const radius = Math.random() * 20 + 10; // 随机半径  
+            const x = Math.random() * (canvas.width - radius * 2) + radius; // 随机x坐标  
+            const y = Math.random() * (canvas.height - radius * 2) + radius; // 随机y坐标  
+            balls.push(new Ball(x, y, radius)); // 创建小球实例并加入数组  
+        }  
+
+        // 动画循环函数  
+        function animate() {  
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清空canvas  
+
+            for (let ball of balls) {  
+                ball.draw(); // 绘制每个小球  
+                ball.update(); // 更新每个小球的位置  
+            }  
+
+            // 检测每两个小球之间的碰撞  
+            for (let i = 0; i < balls.length; i++) {  
+                for (let j = i + 1; j < balls.length; j++) {  
+                    if (detectCollision(balls[i], balls[j])) { // 如果发生碰撞  
+                        balls[i].color = randomColor(); // 改变第一个球的颜色  
+                        balls[j].color = randomColor(); // 改变第二个球的颜色  
+                    }  
+                }  
+            }  
+
+            requestAnimationFrame(animate); // 请求下一帧动画  
+        }  
+        
+        animate(); // 开始动画  
+    </script>  
+</body>  
+</html>
