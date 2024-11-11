@@ -116,6 +116,7 @@ function playSound(soundId) {
 
 
 //加载txt
+/*
 async function loadGameData() {  
     try {  
         const response = await fetch('game_data.txt');  
@@ -139,6 +140,7 @@ function displayGameData(gameData) {
         outputDiv.appendChild(messageDiv);  
     }  
 }
+*/
 
 
 //保存玩家信息
