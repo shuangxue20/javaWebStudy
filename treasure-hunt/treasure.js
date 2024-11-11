@@ -67,8 +67,8 @@ async function findTreasureWithAsyncAwait() {
     const outputDiv = document.getElementById('output');  
     
     try {  
-        const ground = await TreasureMap.ground();  
-        displayMessage(ground,false);
+        //const ground = await TreasureMap.ground();  
+        //displayMessage(ground,false);
         
         const clue = await TreasureMap.getInitialClue();  
         displayMessage(clue, true);  
