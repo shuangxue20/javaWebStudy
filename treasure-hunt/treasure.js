@@ -50,13 +50,7 @@ class TreasureMap {
             }, 1000);  
         });  
     }  
-    static ground() {  
-        return new Promise((resolve) => {       
-        resolve("图书馆: 古老的图书馆里书架上满是灰尘，藏有许多珍贵的书籍。"
-            +"神庙: 这座神庙隐藏在森林深处，崇拜着古老的神祇。"
-            +"守卫: 神庙外有一个高大的守卫，他面无表情，手握长矛，不让任何人靠近。");   
-        });  
-    }  
+    
 }  
   
 
@@ -67,8 +61,7 @@ async function findTreasureWithAsyncAwait() {
     const outputDiv = document.getElementById('output');  
     
     try {  
-        //const ground = await TreasureMap.ground();  
-        //displayMessage(ground,false);
+        
         
         const clue = await TreasureMap.getInitialClue();  
         displayMessage(clue, true);  
