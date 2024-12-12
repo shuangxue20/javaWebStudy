@@ -1,0 +1,197 @@
+<!DOCTYPE html>  
+<html>  
+<body>  
+  <div id="root"></div>  
+</body>  
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>  
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.7.0/dist/es-module-shims.js"></script>  
+<script type="importmap">  
+{  
+  "imports": {  
+    "react": "https://esm.sh/react?dev",  
+    "react-dom/client": "https://esm.sh/react-dom/client?dev"  
+  }  
+}  
+</script>  
+<script type="text/babel" data-type="module">  
+import React, { StrictMode } from 'react';  
+import { createRoot } from 'react-dom/client';  
+import { useState } from 'react';  
+
+function Square({ value, onSquareClick }) {  
+  return (  
+    <button className="square" onClick={onSquareClick}>  
+      {value}  
+    </button>  
+  );  
+}  
+
+
+
+function Board({ xIsNext, squares, onPlay }) {  
+  function handleClick(i) {  
+    if (calculateWinner(squares) || squares[i]) {  
+      return;  
+    }  
+    const nextSquares = squares.slice();  
+    nextSquares[i] = xIsNext ? 'X' : 'O'; //优化if判断，简化判断代码
+    onPlay(nextSquares);  
+  }  
+
+  const winner = calculateWinner(squares);  
+  let status;  
+  if (winner) {  
+    status = 'Winner: ' + winner;  
+  } else {  
+    status = 'Next player: ' + (xIsNext ? 'X' : 'O');  
+  }  
+
+
+
+
+  //修改棋盘大小并生成 10x10 的棋盘
+  const rows = Array.from({ length: 10 }, (_, rowIndex) => (  
+    // 创建每一行的 <div> 元素，设置唯一的 key 值
+    <div className="board-row" key={rowIndex}>  
+      {Array.from({ length: 10 }, (_, colIndex) => ( 
+        // 为每个单元格生成一个 <Square> 组件 
+        <Square   
+          key={colIndex}   // 设置唯一的 key 值
+          value={squares[rowIndex * 10 + colIndex]}   // 根据行列计算当前方格的值  
+          onSquareClick={() => handleClick(rowIndex * 10 + colIndex)}   // 点击方格时调用 handleClick
+        />  
+      ))}  
+    </div>  
+  ));  
+
+  // 返回渲染的内容
+  return (  
+    <>  
+      <div className="status">{status}</div>  {/* 显示游戏状态 */} 
+      {rows}  {/* 渲染生成的棋盘行 */} 
+    </>  
+  );  
+}  
+
+
+
+
+let App = function Game() {  
+  const [history, setHistory] = useState([Array(100).fill(null)]);  //修改棋盘大小
+  const [currentMove, setCurrentMove] = useState(0);  
+  const xIsNext = currentMove % 2 === 0;  
+  const currentSquares = history[currentMove];  
+
+  function handlePlay(nextSquares) {  
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];  
+    setHistory(nextHistory);  
+    setCurrentMove(nextHistory.length - 1);  
+  }  
+
+  function jumpTo(nextMove) {  
+    setCurrentMove(nextMove);  
+  }  
+
+  const moves = history.map((squares, move) => {  
+    let description;  
+    if (move > 0) {  
+      description = 'Go to move #' + move;  
+    } else {  
+      description = 'Go to game start';  
+    }  
+    return (  
+      <li key={move}>  
+        <button onClick={() => jumpTo(move)}>{description}</button>  
+      </li>  
+    );  
+  });  
+
+  return (  
+    <div className="game">  
+      <div className="game-board">  
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />  
+      </div>  
+      <div className="game-info">  
+        <ol>{moves}</ol>  
+      </div>  
+    </div>  
+  );  
+}  
+//修改胜利条件
+function calculateWinner(squares) {  
+  const lines = [];  // 存储所有可能的获胜组合
+
+  // Horizontal, vertical, and diagonal checks  
+  for (let i = 0; i < 10; i++) {  
+    for (let j = 0; j < 10; j++) {  
+      if (j < 6) lines.push([i * 10 + j, i * 10 + j + 1, i * 10 + j + 2, i * 10 + j + 3, i * 10 + j + 4]); //检查水平情况  
+      if (i < 6) lines.push([i * 10 + j, (i + 1) * 10 + j, (i + 2) * 10 + j, (i + 3) * 10 + j, (i + 4) * 10 + j]); // 检查垂直情况  
+      if (i < 6 && j < 6) lines.push([i * 10 + j, (i + 1) * 10 + j + 1, (i + 2) * 10 + j + 2, (i + 3) * 10 + j + 3, (i + 4) * 10 + j + 4]); // 检查主对角线
+      if (i < 6 && j > 3) lines.push([i * 10 + j, (i + 1) * 10 + j - 1, (i + 2) * 10 + j - 2, (i + 3) * 10 + j - 3, (i + 4) * 10 + j - 4]); // 检查反对角线 
+    }  
+  }  
+
+  // 遍历所有可能的获胜组合，检查是否有获胜者 
+  for (let i = 0; i < lines.length; i++) {  
+    const [a, b, c, d, e] = lines[i];  // 解构赋值，获取当前组合的索引
+    // 检查这些位置上的值是否相同且不为空，若相同则返回获胜者
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c] && squares[a] === squares[d] && squares[a] === squares[e]) {  
+      return squares[a];  
+    }  
+  }  
+  return null;  
+}  
+
+const root = createRoot(document.getElementById('root'));  
+root.render(  
+  <StrictMode>  
+    <App />  
+  </StrictMode>  
+);  
+</script>  
+<style>  
+* {  
+  box-sizing: border-box;  
+}  
+
+body {  
+  font-family: sans-serif;  
+  margin: 20px;  
+  padding: 0;  
+}  
+
+.square {  
+  background: #fff;  
+  border: 1px solid #999;  
+  float: left;  
+  font-size: 24px;  
+  font-weight: bold;  
+  line-height: 34px;  
+  height: 34px;  
+  margin-right: -1px;  
+  margin-top: -1px;  
+  padding: 0;  
+  text-align: center;  
+  width: 34px;  
+}  
+
+.board-row:after {  
+  clear: both;  
+  content: '';  
+  display: table;  
+}  
+
+.status {  
+  margin-bottom: 10px;  
+}  
+
+.game {  
+  display: flex;  
+  flex-direction: row;  
+}  
+
+.game-info {  
+  margin-left: 20px;  
+}  
+</style>  
+</html>
