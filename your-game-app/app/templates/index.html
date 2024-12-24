@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Phaser Workshop - lesson 16: Randomizing gameplay</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+    <script src="../../static/js/phaser.2.4.2.min.js"></script>
+</head>
+
+<body>
+    <div id="player-info"></div>
+    <script>
+
+        async function getPlayerData() {
+            const response = await fetch('/api/players');
+            const data = await response.json();
+            let playerInfo = '<h2>Player Information:</h2>';
+            data.forEach(player => {
+                playerInfo += `<p>${player.username}: ${player.score}</p>`;
+            });
+            document.getElementById('player-info').innerHTML = playerInfo;
+        }
+
+        window.onload = function () {
+            getPlayerData();
+        };
+
+
+        // 初始化 Phaser 游戏对象
+        var game = new Phaser.Game(480, 320, Phaser.AUTO, null, { preload: preload, create: create, update: update });
+
+        // 游戏对象的声明
+        var ball;
+        var paddle;
+        var bricks;
+        var newBrick;
+        var brickInfo;
+        var scoreText;
+        var score = 0;
+        var lives = 3;
+        var livesText;
+        var lifeLostText;
+        var playing = false;
+        var startButton;
+
+        function handleRemoteImagesOnJSFiddle() {
+            game.load.baseURL = 'https://shuangxue20.github.io/javaWebStudy/demo/';
+            game.load.crossOrigin = 'anonymous';
+        }
+        // preload 函数：用于加载游戏资源
+        function preload() {
+            handleRemoteImagesOnJSFiddle();
+            game.load.crossOrigin = 'anonymous';
+            game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+            game.scale.pageAlignHorizontally = true;
+            game.scale.pageAlignVertically = true;
+            game.stage.backgroundColor = '#eee';
+            game.load.image('paddle', 'img/paddle.png');
+            game.load.image('brick', 'img/brick.png');
+            game.load.spritesheet('ball', 'img/wobble.png', 20, 20);
+            game.load.spritesheet('button', 'img/button.png', 120, 40);
+        }
+
+        // create 函数：用于设置游戏场景和对象
+        function create() {
+            game.physics.startSystem(Phaser.Physics.ARCADE);
+            game.physics.arcade.checkCollision.down = false;
+            // 创建并配置球对象
+            ball = game.add.sprite(game.world.width * 0.5, game.world.height - 25, 'ball');
+            ball.animations.add('wobble', [0, 1, 0, 2, 0, 1, 0, 2, 0], 24);
+            ball.anchor.set(0.5);
+            game.physics.enable(ball, Phaser.Physics.ARCADE);
+            ball.body.collideWorldBounds = true;
+            ball.body.bounce.set(1);
+            ball.checkWorldBounds = true;
+            ball.events.onOutOfBounds.add(ballLeaveScreen, this);
+
+            // 创建并配置拍子对象
+            paddle = game.add.sprite(game.world.width * 0.5, game.world.height - 5, 'paddle');
+            paddle.anchor.set(0.5, 1);
+            game.physics.enable(paddle, Phaser.Physics.ARCADE);
+            paddle.body.immovable = true;
+
+            // 初始化砖块
+            initBricks();
+
+            // 设置文本样式并创建分数和生命值文本对象
+            var textStyle = { font: '18px Arial', fill: '#0095DD' };
+            scoreText = game.add.text(5, 5, 'Points: 0', textStyle);
+            livesText = game.add.text(game.world.width - 5, 5, 'Lives: ' + lives, textStyle);
+            livesText.anchor.set(1, 0);
+            lifeLostText = game.add.text(game.world.width * 0.5, game.world.height * 0.5, 'Life lost, tap to continue', textStyle);
+            lifeLostText.anchor.set(0.5);
+            lifeLostText.visible = false;
+
+            // 创建开始游戏按钮
+            startButton = game.add.button(game.world.width * 0.5, game.world.height * 0.5, 'button', startGame, this, 1, 0, 2);
+            startButton.anchor.set(0.5);
+        }
+
+        // update 函数：用于更新游戏状态
+        function update() {
+            game.physics.arcade.collide(ball, paddle, ballHitPaddle);
+            game.physics.arcade.collide(ball, bricks, ballHitBrick);
+            if (playing) {
+                paddle.x = game.input.x || game.world.width * 0.5;
+            }
+        }
+
+        // 初始化砖块的函数
+        function initBricks() {
+            brickInfo = {
+                width: 50,
+                height: 20,
+                count: {
+                    row: 7,
+                    col: 3
+                },
+                offset: {
+                    top: 50,
+                    left: 60
+                },
+                padding: 10
+            }
+            bricks = game.add.group();
+            for (c = 0; c < brickInfo.count.col; c++) {
+                for (r = 0; r < brickInfo.count.row; r++) {
+                    var brickX = (r * (brickInfo.width + brickInfo.padding)) + brickInfo.offset.left;
+                    var brickY = (c * (brickInfo.height + brickInfo.padding)) + brickInfo.offset.top;
+                    newBrick = game.add.sprite(brickX, brickY, 'brick');
+                    game.physics.enable(newBrick, Phaser.Physics.ARCADE);
+                    newBrick.body.immovable = true;
+                    newBrick.anchor.set(0.5);
+                    bricks.add(newBrick);
+                }
+            }
+        }
+
+        // 球与砖块碰撞的函数
+        function ballHitBrick(ball, brick) {
+            var killTween = game.add.tween(brick.scale);
+            killTween.to({ x: 0, y: 0 }, 200, Phaser.Easing.Linear.None);
+            killTween.onComplete.addOnce(function () {
+                brick.kill();
+            }, this);
+            killTween.start();
+            score += 10;
+            scoreText.setText('Points: ' + score);
+            if (score === brickInfo.count.row * brickInfo.count.col * 10) {
+                alert('You won the game, congratulations!');
+                location.reload();
+            }
+        }
+
+        // 球离开屏幕的函数
+        function ballLeaveScreen() {  
+            lives--;  
+            if (lives) {  
+                livesText.setText('Lives: ' + lives);  
+                lifeLostText.visible = true;  
+                ball.reset(game.world.width * 0.5, game.world.height - 25);  
+                paddle.reset(game.world.width * 0.5, game.world.height - 5);  
+                
+                game.input.onDown.addOnce(function () {  
+                    lifeLostText.visible = false;  
+                    ball.body.velocity.set(150, -150);  
+                }, this);  
+            } else {  
+                alert('You lost, game over!');  
+
+                // // 提交分数到后端  
+                // fetch('/api/players', {  
+                //     method: 'POST',  
+                //     headers: {  
+                //         'Content-Type': 'application/json'  
+                //     },  
+                //     body: JSON.stringify({ username: 'Player1', score: score })  // 根据实际玩家用户名来设置  
+                // });  
+
+                location.reload();  
+            }  
+        }  
+
+        // 球与拍子碰撞的函数
+        function ballHitPaddle(ball, paddle) {
+            ball.animations.play('wobble');
+            ball.body.velocity.x = -1 * 5 * (paddle.x - ball.x);
+        }
+
+        // 开始游戏的函数
+        function startGame() {
+            startButton.destroy();
+            ball.body.velocity.set(150, -150);
+            playing = true;
+        }
+    </script>
+    <!-- 用户信息和得分历史记录 -->
+    <div>
+        <h2>用户信息和得分历史记录</h2>
+        {% for user in users %}
+            <div>
+                <h3>{{ user.username }}</h3>
+                <ul>
+                    {% for score in user.scores %}
+                        <li>得分: {{ score.score }} - 时间: {{ score.date }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div>
+    <!-- 提交得分的表单 -->
+    <form action="/submit_score" method="post">
+        {% for user in users %}
+            <input type="hidden" name="user_id" value="{{ user.id }}">
+        {% endfor %}
+        <input type="hidden" name="score" value="{{ score }}">
+        <button type="submit">提交得分</button>
+    </form>
+
+</body>
+
+</html>
